@@ -74,3 +74,53 @@ impl<'a> FASTQParser<'a> {
         (sequence_id, nucleotide_sequence, quality_score)
     }    
 }
+
+impl FASTQObj {
+    /// Creates a new FASTQObj, which is the target object created from the parsing of the input FASTQ file. 
+    /// 
+    /// The new method is designed to be created with an output directly from the FASTQParser.parse method.
+    /// 
+    /// The FASTQObj object allows one to run a series of operations on genomic sequences like reverse complementing,
+    /// 
+    /// translation, and searching for specific motifs
+    pub fn new(seq_id: String, nucleotide_sequence: Vec<u8>, quality_score: Vec<u8>) -> FASTQObj {
+        FASTQObj {
+            seq_id,
+            nucleotide_sequence,
+            quality_score
+        }
+    }
+
+    /// Reverses the order of the nucleotide sequence stored in the FASTQObj
+    pub fn reverse(&self) -> Vec<u8> {
+        let mut obj = self.nucleotide_sequence.clone();
+        obj.reverse();
+        obj.to_vec()
+    }
+
+    /// Returns the complementation of the nucleotide sequence stored in the FASTQObj.
+    /// 
+    /// For standard DNA operations,
+    /// 
+    /// A (adenine) is complemented by T (thymine)
+    /// 
+    /// T (thymine) is complemented by A (adenine)
+    /// 
+    /// C (cytosine) is complemented by G (guanine)
+    /// 
+    /// G (guanine) is complemented by C (cytosine)
+    pub fn complement(&self) -> Vec<u8> {
+        self.nucleotide_sequence.iter().map(|&nucleotide| match nucleotide as char {
+            'A' => 'T' as u8,
+            'T' => 'A' as u8,
+            'C' => 'G' as u8,
+            'G' => 'C' as u8,
+            _ => nucleotide, // Handle non-nucleotide characters if needed
+        }).collect()
+    }
+
+    pub fn reverse_complement(&self) -> Vec<u8> {
+        let reversed_sequence: Vec<u8> = self.reverse();
+        let complemented_sequence: Vec<u8> = self.complement
+    }
+}
