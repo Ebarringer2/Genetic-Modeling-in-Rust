@@ -22,14 +22,14 @@ impl fmt::Display for FASTQErr {
 #[derive(Debug)]
 pub struct FASTQParser<'a> {
     pub fastq_path: &'a str,
-    pub raw_data: String
+    pub raw_data: Vec<u8>
 }
 
 #[derive(Debug)]
-pub struct FASTQObj<'a> {
-    pub seq_id: &'a str,
-    pub nucleotide_sequence: &'a [u8],
-    pub quality_score: &'a [u8]
+pub struct FASTQObj {
+    pub seq_id: String,
+    pub nucleotide_sequence: Vec<u8>,
+    pub quality_score: Vec<u8>
 }
 
 impl<'a> FASTQParser<'a> {
@@ -41,8 +41,8 @@ impl<'a> FASTQParser<'a> {
             File::open(fastq_path)
                 .map_err(|_| FASTQErr::OpenFail)
                 .and_then(|mut file| {
-                    let mut contents = String::new();
-                    file.read_to_string(&mut contents)
+                    let mut contents: Vec<u8> = Vec::new();
+                    file.read_to_end(&mut contents)
                         .map(|_| FASTQParser { fastq_path, raw_data: contents })
                         .map_err(|_| FASTQErr::ReadFail)
                 })
@@ -51,19 +51,26 @@ impl<'a> FASTQParser<'a> {
         }
     }
 
+    /// FASTQ files store quality scores in Phred Codes. 
+    /// 
+    /// This method decodes them such that they can be processed more easily by the FASTQObj
+    fn phred_decode(&self, scores: &[u8]) -> Vec<u8> {
+        scores.iter().map(|&char_code| char_code - 33).collect()
+    }
+
     /// Parses the raw data stored in the FASTQParser, then returns a vector containing (in this order)
     /// 
     /// the sequence id, the nucleotide sequence, and the quality score.
     /// 
     /// Each element of the return Vector has a type such that it is easily applicable to the FASTQObj object
-    pub fn parse(&self) -> (&str, &[u8], &[u8]) {
-        let lines: Vec<&str> = self.raw_data.split('\n').collect();
-        let sequence_id: &str = lines[0];
-        let nucleotide_sequence: &[u8] = lines[1].as_bytes();
-        let quality_score: &[u8] = lines[2].as_bytes();
+    pub fn parse(&self) -> (String, Vec<u8>, Vec<u8>) {
+        let lines: Vec<&[u8]> = self.raw_data.split(|&c| c == b'\n').collect();
+        let sequence_id = String::from_utf8_lossy(lines[0]).into_owned();
+        let nucleotide_sequence = Vec::from(lines[1]);
+        let quality_score = self.phred_decode(lines[3]);
         println!("Sequence ID: {}", sequence_id);
-        println!("Nucleotide Sequence: {:#?}", nucleotide_sequence);
-        println!("Quality Score: {:#?}", quality_score);
+        println!("Nucleotide Sequence: {:?}", nucleotide_sequence);
+        println!("Quality Score: {:?}", quality_score.clone());
         (sequence_id, nucleotide_sequence, quality_score)
-    }
+    }    
 }
