@@ -92,8 +92,8 @@ impl FASTQObj {
     }
 
     /// Reverses the order of the nucleotide sequence stored in the FASTQObj
-    pub fn reverse(&self) -> Vec<u8> {
-        let mut obj = self.nucleotide_sequence.clone();
+    pub fn reverse(&self, nucleotide_sequence: Vec<u8>) -> Vec<u8> {
+        let mut obj: Vec<u8> = nucleotide_sequence;
         obj.reverse();
         obj.to_vec()
     }
@@ -109,8 +109,8 @@ impl FASTQObj {
     /// C (cytosine) is complemented by G (guanine)
     /// 
     /// G (guanine) is complemented by C (cytosine)
-    pub fn complement(&self) -> Vec<u8> {
-        self.nucleotide_sequence.iter().map(|&nucleotide| match nucleotide as char {
+    pub fn complement(&self, nucleotide_sequence: Vec<u8>) -> Vec<u8> {
+        nucleotide_sequence.iter().map(|&nucleotide| match nucleotide as char {
             'A' => 'T' as u8,
             'T' => 'A' as u8,
             'C' => 'G' as u8,
@@ -119,8 +119,9 @@ impl FASTQObj {
         }).collect()
     }
 
-    pub fn reverse_complement(&self) -> Vec<u8> {
-        let reversed_sequence: Vec<u8> = self.reverse();
-        let complemented_sequence: Vec<u8> = self.complement
+    pub fn reverse_complement(&self, nucleotide_sequence: Vec<u8>) -> Vec<u8> {
+        let reversed_sequence: Vec<u8> = self.reverse(nucleotide_sequence);
+        let complemented_sequence: Vec<u8> = self.complement(reversed_sequence);
+        complemented_sequence
     }
 }
